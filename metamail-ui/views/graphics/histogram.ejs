@@ -1,0 +1,99 @@
+<script type="text/javascript">
+
+    // Width and height
+    <%
+        if (typeof w == 'undefined') {
+            var w = 860;
+        }
+        if (typeof h == 'undefined') {
+            var h = 480;
+        }
+    %>
+    var w = <%= w %>;
+    var h = <%= h %>;
+    var barPadding = 1;
+
+    var dataset = new Array();
+    var labels = new Array();
+
+    d3.csv("/csv/<%= csv_file %>", function(data) {
+
+        data.forEach(function(d) {
+            dataset.push(d.value / 1000); 
+            labels.push(d.label);
+        });
+
+        // Create SVG element
+        var svg = d3.select("div.chart")
+            .append("svg")
+            .attr("width", w)
+            .attr("height", h);
+
+        svg.selectAll("rect")
+            .data(dataset)
+            .enter()
+            .append("rect")
+            .attr("x", function(d, i) {
+                    return i * (w / dataset.length);
+            })
+            .attr("y", function(d) {
+                return h - (d * 4) - 24;
+            })
+            .attr("width", w / dataset.length - barPadding)
+            .attr("height", function(d) {
+                return (d * 4);
+            });
+            
+        svg.selectAll("text")
+            .data(dataset)
+            .enter()
+            .append("text")
+            .text(function(d) {
+                return d;
+            })
+            .attr("text-anchor", "middle")
+            .attr("x", function(d, i) {
+                return i * (w / dataset.length) + (w / dataset.length - barPadding) / 2;
+            })
+            .attr("y", function(d) {
+                return h - (d * 4) - 28;
+            })
+            .attr("font-family", "sans-serif")
+            .attr("font-size", "11px")
+            .attr("fill", "black");
+
+        svg.selectAll("labels")
+            .data(labels)
+            .enter()
+            .append("text")
+            .text(function(d) {
+                return d;
+            })
+            .attr("text-anchor", "middle")
+            .attr("x", function(d, i) {
+                return i * (w / dataset.length) + (w / dataset.length - barPadding) / 2;
+            })
+            .attr("y", function(d, i) {
+                return h - 10;
+            })
+            .attr("font-family", "sans-serif")
+            .attr("font-weight", "bold")
+            .attr("font-size", "11px")
+            .attr("fill", "black");
+
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.svg.axis()
+            .scale(x)
+            .orient("bottom"));
+
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(d3.svg.axis()
+            .scale(y)
+            .orient("left"));
+
+    });
+
+</script>

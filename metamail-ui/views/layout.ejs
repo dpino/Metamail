@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/stylesheets/base.css"/>
+<%
+if (typeof css_files !== 'undefined') {
+    for (var i = 0; i < css_files.length; i++) {
+        var css_file = css_files[i]; %>
+        <link rel="stylesheet" href="/stylesheets/<%= css_file %>"/><%
+    }
+}
+%>
+
+    <script type="text/javascript" src="/javascripts/d3/d3.v2.js"></script>
+  </head>
+
+  <body>
+    <div id="header">
+        <span class="title">Metamail</span>
+        <span class="subtitle">Email Analysis Tool</span>
+    </div>
+
+<%
+    if (title == 'Express') { %>
+        <div id="center">
+            <!-- Menu -->
+            <ul class="menu">
+                <li>
+                    <a href="graphics/msg-by-size/">Messages by Size</a>
+                </li>
+                <li>
+                    <a href="graphics/msg-by-day-week/">Messages by Day of the Week</a>
+                </li>
+                <li>
+                    <a href="graphics/msg-by-hour-day/">Messages by Hour of the Day</a>
+                </li>
+                <li>
+                    <a href="graphics/msg-by-month/">Messages by Month</a>
+                </li>
+                <li>
+                    <a href="graphics/msg-by-year/">Messages by Year</a>
+                </li>
+                <li>
+                    <a href="graphics/msg-received/">Messages Received</a>
+                </li>
+                <li>
+                    <a href="graphics/msg-sent/">Messages Sent</a>
+                </li>
+                <li>
+                    <a href="graphics/msg-thread-length/">Messages by Thread Length</a>
+                </li>
+            </ul>
+
+            <!-- Content -->
+            <div class="content">
+                <h1>Welcome to Metamail</h1>
+                <p>Metamail is an email analysis tool based on Hadoop. Metamail uses the <a href="http://www.cs.cmu.edu/~enron/">Enron Email Datase</a> as sample data. Metamail includes the following statistics:</p>
+                <ul class="simple">
+                    <li><strong>Mails by size</strong>. Mails by size grouped on intervals by 20KB (0-20KB, 20KB-40KB, etc). As almost all mails are on the 0-20KB interv
+                    <li><strong>Mails by thread length</strong>. Top 50 mails by thread length</li>
+                    <li><strong>Mails per day of the week</strong>. From Monday-Sunday, mails on each day</li>
+                    <li><strong>Mails per hour of the day</strong>. From 0 hours to 23 hours, mails by hour</li>
+                    <li><strong>Mails per month</strong>. Only the emails received on year 2001 are shown</li>
+                    <li><strong>Mails per year</strong></li>
+                    <li><strong>Mails received</strong>. Top 50 people who received more email</li>
+                    <li><strong>Mails sent</strong>. Top 50 people who sent more email</li>
+                </ul>
+                <p>If you would like to know more about Metamail please check the <a href="https://github.com/dpino/Metamail/blob/master/README.md">README at GitHub</a></p>
+            </div>
+        </div><%
+    } else { %>
+        <div class="chart">
+            <h1 style="text-align: center"><%= title %></h1>
+            <%- body %>
+        </div><%
+    }
+%>
+
+    <div id="footer">
+        <p>Designed by <a href="http://www.igalia.com">Igalia</a></p>
+    </div>
+  </body>
+</html>

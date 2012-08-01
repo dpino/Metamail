@@ -1,0 +1,86 @@
+html, body {
+  height: 100%;
+  margin: 0px auto;
+  padding: 0px;
+  padding-bottom: 80px;
+  background: white;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+#header {
+  color: white;
+  background: black;
+  padding: 0px;
+  padding-top: 10px;
+  padding-left: 150px;
+  padding-right: 150px;
+  height: 80px;
+}
+
+#header .title {
+  font-size: 36px;
+  font-weight: bold;
+}
+
+#header .subtitle {
+  display: block;
+  font-size: 12px;
+  margin-left: 5px;
+  margin-top: -5px;
+}
+
+ul.menu {
+    float: left;
+    list-style-type: none;
+    display: block;
+    width: 200px;
+    background-color: #eee;
+    padding-left: 0px;
+}
+
+ul.menu > li {
+    border-bottom: 1px solid black;
+}
+
+ul.menu > li:first-child {
+    border-top: 1px solid black;
+}
+
+ul.menu > li > a {
+    color: black;
+    text-decoration: none;
+}
+
+ul.menu > li:hover {
+    background: #ed0;
+}
+
+#center {
+    width: 80%;
+    margin: 0 auto;
+}
+
+div.chart {
+    width: 80%;
+    margin: 0 auto;
+}
+
+div.content {
+    overflow: hidden;
+    padding-left: 30px;
+}
+
+#footer {
+  padding: 0px;
+  padding-top: 4px;
+  width: 100%;
+  height: 80px;
+  color: white;
+  background: black;
+}
+
+#footer > p {
+  font-size: 10px;
+  text-align: center;
+  vertical-align: text-bottom;
+}
