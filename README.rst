@@ -8,3 +8,5 @@ Metamail is mail analysis tool based on Hadoop. The project is composed of 3 sub
    * Metamail UI. Web UI to visualize the results of the Hadoop jobs.
 
 Each folder contains a README. Please, read them to know how to run Metamail.
+
+There is a demo version of the Metamail UI available at http://igalia-metamail.herokuapp.com
