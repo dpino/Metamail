@@ -4,8 +4,7 @@
  */
 
 var express = require('express'),
-    routes = require('./routes'),
-    d3 = require('d3');
+    routes = require('./routes');
 
 var app = module.exports = express.createServer();
 
