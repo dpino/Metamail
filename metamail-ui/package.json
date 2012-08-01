@@ -1,9 +1,14 @@
 {
-    "name": "application-name"
+    "name": "metamail-ui"
   , "version": "0.0.1"
   , "private": true
   , "dependencies": {
       "express": "2.5.8"
     , "ejs": ">= 0.0.1"
   }
+  , "engines": {
+    "node": "0.6.8",
+    "npm": "1.1.1"
+  }
+
 }
