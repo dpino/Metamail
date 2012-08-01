@@ -39,6 +39,8 @@ app.get('/graphics/msg-received', routes.msg_received);
 app.get('/graphics/msg-sent', routes.msg_sent);
 app.get('/graphics/msg-thread-length', routes.msg_thread_length);
 
-app.listen(3000, function(){
+// Listen to env.PORT if it's defined (needed to deploy in Heroku)
+var port = process.env.PORT || 3000;
+app.listen(port, function() {
   console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
 });
