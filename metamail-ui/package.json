@@ -1,5 +1,5 @@
 {
-    "name": "metamail-ui"
+    "name": "metamail"
   , "version": "0.0.1"
   , "private": true
   , "dependencies": {
@@ -7,8 +7,7 @@
     , "ejs": ">= 0.0.1"
   }
   , "engines": {
-    "node": "0.6.8",
-    "npm": "1.1.1"
+      "node": "0.6.8",
+      "npm": "1.1.1"
   }
-
 }
