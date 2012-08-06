@@ -3,7 +3,7 @@
  */
 
 exports.index = function(req, res){
-  res.render('index', { title: 'Express' })
+  res.render('index', { title: 'Metamail' })
 };
 
 exports.msg_by_size = function(req, res) {

@@ -1,4 +1,4 @@
-html, body {
+body {
   height: 100%;
   margin: 0px auto;
   padding: 0px;
@@ -17,9 +17,11 @@ html, body {
   height: 80px;
 }
 
-#header .title {
+#header a.title, a.title:visited {
   font-size: 36px;
   font-weight: bold;
+  text-decoration: none;
+  color: white;
 }
 
 #header .subtitle {
@@ -56,12 +58,12 @@ ul.menu > li:hover {
 }
 
 #center {
-    width: 80%;
+    width: 65%;
     margin: 0 auto;
 }
 
 div.chart {
-    width: 80%;
+    width: 65%;
     margin: 0 auto;
 }
 
@@ -70,7 +72,14 @@ div.content {
     padding-left: 30px;
 }
 
+#container {
+  min-height:100%;
+  position:relative;
+}
+
 #footer {
+  position: absolute;
+  bottom: 0px;
   padding: 0px;
   padding-top: 4px;
   width: 100%;
@@ -83,4 +92,8 @@ div.content {
   font-size: 10px;
   text-align: center;
   vertical-align: text-bottom;
+}
+
+#footer > p > a:visited {
+  color: white;
 }

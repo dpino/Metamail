@@ -17,12 +17,12 @@ if (typeof css_files !== 'undefined') {
 
   <body>
     <div id="header">
-        <span class="title">Metamail</span>
+        <a class="title" href="/">Metamail</a>
         <span class="subtitle">Email Analysis Tool</span>
     </div>
 
 <%
-    if (title == 'Express') { %>
+    if (title == 'Metamail') { %>
         <div id="center">
             <!-- Menu -->
             <ul class="menu">
@@ -57,7 +57,7 @@ if (typeof css_files !== 'undefined') {
                 <h1>Welcome to Metamail</h1>
                 <p>Metamail is an email analysis tool based on Hadoop. Metamail uses the <a href="http://www.cs.cmu.edu/~enron/">Enron Email Datase</a> as sample data. Metamail includes the following statistics:</p>
                 <ul class="simple">
-                    <li><strong>Mails by size</strong>. Mails by size grouped on intervals by 20KB (0-20KB, 20KB-40KB, etc). As almost all mails are on the 0-20KB interv
+                    <li><strong>Mails by size</strong>. Mails by size grouped on intervals by 20KB (0-20KB, 20KB-40KB, etc). As almost all mails are on the 0-20KB interval.
                     <li><strong>Mails by thread length</strong>. Top 50 mails by thread length</li>
                     <li><strong>Mails per day of the week</strong>. From Monday-Sunday, mails on each day</li>
                     <li><strong>Mails per hour of the day</strong>. From 0 hours to 23 hours, mails by hour</li>
@@ -66,9 +66,12 @@ if (typeof css_files !== 'undefined') {
                     <li><strong>Mails received</strong>. Top 50 people who received more email</li>
                     <li><strong>Mails sent</strong>. Top 50 people who sent more email</li>
                 </ul>
-                <p>If you would like to know more about Metamail please check the <a href="https://github.com/dpino/Metamail/blob/master/README.md">README at GitHub</a></p>
+                <p>If you would like to know more about Metamail please check the <a href="https://github.com/dpino/Metamail#readme">README at GitHub</a></p>
             </div>
-        </div><%
+        </div>
+        <div id="footer">
+          <p><span><img style="vertical-align: middle" src="img/igalia-logo-mini.png"/></span>&nbsp;Created by <a href="http://www.igalia.com">Igalia</a></p>
+        </div> <%
     } else { %>
         <div class="chart">
             <h1 style="text-align: center"><%= title %></h1>
@@ -76,9 +79,5 @@ if (typeof css_files !== 'undefined') {
         </div><%
     }
 %>
-
-    <div id="footer">
-        <p>Designed by <a href="http://www.igalia.com">Igalia</a></p>
-    </div>
   </body>
 </html>
