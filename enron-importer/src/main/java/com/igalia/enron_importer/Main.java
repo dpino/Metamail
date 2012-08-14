@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -31,8 +32,12 @@ import org.apache.hadoop.hbase.util.Bytes;
  * @author Diego Pino García <dpino@igalia.com>
  *
  */
-public class Main
-{
+public class Main {
+	
+    private static final String MAIL_FOLDER = "./data/maildir/";
+
+    private static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+    
 
     /**
      *
@@ -213,7 +218,6 @@ public class Main
                 return null;
             }
             return null;
-//            return Mail.create(buffer);
         }
 
         private BufferedReader openFile(String filename) throws FileNotFoundException {
@@ -248,34 +252,39 @@ public class Main
 
     }
 
-    private static final String MAIL_FOLDER = "./data/maildir/";
-
     private static void debug(Object obj) {
         System.out.println(String.format("### DEBUG: %s", obj.toString()));
     }
-
+    
     public static void main( String[] args )
     {
         Mail mail;
+        long failed = 0, imported = 0;
 
         File dir = new File(args.length == 0 ? MAIL_FOLDER : args[0]);
         try {
             HBaseHelper hbase = HBaseHelper.create();
             HTable table = hbase.createTable("enron", Mail.PERSON, Mail.FOLDER, Mail.BODY);
             
-            Collection<File> files = FileUtils.listFiles(dir, TrueFileFilter.TRUE, TrueFileFilter.TRUE);
+            Collection<File> files = FileUtils.listFiles(dir, TrueFileFilter.TRUE, TrueFileFilter.TRUE);            
             for (File each: files) {
             	String filename = each.getCanonicalPath();
             	mail = MailFactory.createMail(filename);                        	
             	
             	String body = mail.getBody();
             	if (body != null && !body.isEmpty()) {
-            		System.out.println("### Insert mail: " + mail);
+            		// System.out.println("### Insert mail: " + mail);
                 	hbase.insert(table, mail.getId(), Arrays.asList(Mail.PERSON, "", mail.getPerson()));
                 	hbase.insert(table, mail.getId(), Arrays.asList(Mail.FOLDER, "", mail.getFolder()));
-                	hbase.insert(table, mail.getId(), Arrays.asList(Mail.BODY, "", body));            		
+                	hbase.insert(table, mail.getId(), Arrays.asList(Mail.BODY, "", body));                	
+                	imported++;
+            	} else {
+            		failed++;
             	}
             }
+			System.out.println(String.format(
+					"Total: %d; Imported: %d; Failed: %d", files.size(),
+					imported, failed));
         } catch (MasterNotRunningException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

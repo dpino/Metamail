@@ -102,10 +102,14 @@ public class MessagesBySize {
 		}
 	}
 	
-	public static void main(String args[]) throws Exception {
+	public static void main(String args[]) throws Exception {		
 		if (JobRunner.run(setupJob())) {
 			System.out.println("Job completed!");
 		}
+	}
+	
+	public static Boolean execute() throws Exception {
+		return Boolean.valueOf(JobRunner.run(setupJob()));
 	}
 		
 	private static Job setupJob() throws IOException {

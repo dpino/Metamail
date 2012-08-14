@@ -95,6 +95,10 @@ public class MessagesSentByPerson {
 		}
 	}
 	
+	public static Boolean execute() throws Exception {
+		return Boolean.valueOf(JobRunner.run(setupJob()));
+	}
+	
 	private static Job setupJob() throws IOException {
 		Configuration config = HBaseConfiguration.create();
 		Job job = new Job(config, jobName);

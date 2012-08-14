@@ -63,6 +63,10 @@ public class MessagesByTimePeriod {
 			byte[] body = value.getValue(Bytes.toBytes("body"),
 					Bytes.toBytes(""));
 
+			if (body == null) {
+				return;
+			}
+			
 			InputStream input = new ByteArrayInputStream(body);
 			Session s = Session.getDefaultInstance(new Properties());
 			MimeMessage msg;
@@ -118,6 +122,10 @@ public class MessagesByTimePeriod {
 		if (JobRunner.run(setupJob())) {
 			System.out.println("Job completed!");
 		}
+	}
+	
+	public static Boolean execute() throws Exception {
+		return Boolean.valueOf(JobRunner.run(setupJob()));
 	}
 	
 	private static Job setupJob() throws IOException, InterruptedException,
