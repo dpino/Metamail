@@ -4,7 +4,7 @@ BENCHMARK
 MapReduce Jobs
 --------------
 
-Each job was executed 20 times and later the average time was calculated. Check results of each execution in the attached .csv files.
+Each job was executed 20 times and later the average time was calculated. Check results of each execution in the attached .csv files (mail-analyzer/benchmark).
 
 +---------------------------+------------------------+--------------------+
 | Job                       | Average Time (seconds) | Standard Deviation |
