@@ -21,9 +21,12 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -48,7 +51,7 @@ public class Main {
 
         private static Configuration conf = HBaseConfiguration.create();
 
-        public static HBaseHelper create() throws MasterNotRunningException, ZooKeeperConnectionException {
+        public static HBaseHelper create() throws MasterNotRunningException, ZooKeeperConnectionException , IOException {
             HBaseHelper result = new HBaseHelper();
             result.hbase = new HBaseAdmin(conf);
             return result;
@@ -64,15 +67,15 @@ public class Main {
 
         }
 
-        public HTable createTable(String tableName, String... descriptors)
+        public void createTable(String tableName, String... descriptors)
                 throws IOException {
             if (tableExists(tableName)) {
                 dropTable(tableName);
             }
-            return doCreateTable(tableName, descriptors);
+            doCreateTable(tableName, descriptors);
         }
 
-        private HTable doCreateTable(String tableName, String... descriptors)
+        private void doCreateTable(String tableName, String... descriptors)
                 throws IOException {
             HTableDescriptor descriptor = new HTableDescriptor(tableName);
             for (String each : descriptors) {
@@ -81,7 +84,6 @@ public class Main {
             }
             hbase.createTable(descriptor);
             debug(String.format("Database %s created", tableName));
-            return new HTable(tableName);
         }
 
         public void dropTable(String tableName) throws IOException {
@@ -89,22 +91,22 @@ public class Main {
             hbase.deleteTable(tableName);
         }
 
-        public HTable getOrCreateTable(String tableName, String... descriptors)
+        public void insert(String tableName, String rowKey, List<String> values)
                 throws IOException {
-            if (!tableExists(tableName)) {
-                doCreateTable(tableName, descriptors);
-            }
-            return new HTable(tableName);
-        }
 
-        public void insert(HTable table, String rowKey, List<String> values)
-                throws IOException {
-            if (values.size() == 3) {
-                Put put = new Put(Bytes.toBytes(rowKey));
-                put.add(Bytes.toBytes(values.get(0)),
+            Connection connection = ConnectionFactory.createConnection(conf);
+            Table table = connection.getTable(TableName.valueOf(tableName));
+            try {
+              if (values.size() == 3) {
+                  Put put = new Put(Bytes.toBytes(rowKey));
+                  put.add(Bytes.toBytes(values.get(0)),
                         Bytes.toBytes(values.get(1)),
                         Bytes.toBytes(values.get(2)));
-                table.put(put);
+                  table.put(put);
+              }
+            } finally {
+              table.close();
+              connection.close();
             }
         }
 
@@ -260,11 +262,11 @@ public class Main {
     {
         Mail mail;
         long failed = 0, imported = 0;
-
+        String tableName = "enron";
         File dir = new File(args.length == 0 ? MAIL_FOLDER : args[0]);
         try {
             HBaseHelper hbase = HBaseHelper.create();
-            HTable table = hbase.createTable("enron", Mail.PERSON, Mail.FOLDER, Mail.BODY);
+            hbase.createTable(tableName, Mail.PERSON, Mail.FOLDER, Mail.BODY);
             
             Collection<File> files = FileUtils.listFiles(dir, TrueFileFilter.TRUE, TrueFileFilter.TRUE);            
             for (File each: files) {
@@ -274,9 +276,9 @@ public class Main {
             	String body = mail.getBody();
             	if (body != null && !body.isEmpty()) {
             		// System.out.println("### Insert mail: " + mail);
-                	hbase.insert(table, mail.getId(), Arrays.asList(Mail.PERSON, "", mail.getPerson()));
-                	hbase.insert(table, mail.getId(), Arrays.asList(Mail.FOLDER, "", mail.getFolder()));
-                	hbase.insert(table, mail.getId(), Arrays.asList(Mail.BODY, "", body));                	
+                	hbase.insert(tableName, mail.getId(), Arrays.asList(Mail.PERSON, "", mail.getPerson()));
+                	hbase.insert(tableName, mail.getId(), Arrays.asList(Mail.FOLDER, "", mail.getFolder()));
+                	hbase.insert(tableName, mail.getId(), Arrays.asList(Mail.BODY, "", body));                	
                 	imported++;
             	} else {
             		failed++;
