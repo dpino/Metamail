@@ -21,9 +21,12 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -48,23 +51,20 @@ public class Main {
 
         private static Configuration conf = HBaseConfiguration.create();
 
-        public static HBaseHelper create() throws MasterNotRunningException, ZooKeeperConnectionException {
-            HBaseHelper result = new HBaseHelper();
-            result.hbase = new HBaseAdmin(conf);
-            return result;
+        public static HBaseHelper create() throws MasterNotRunningException, ZooKeeperConnectionException , IOException {
+            return new HBaseHelper();
         }
-
-        private HBaseAdmin hbase;
 
         static {
-            conf.set("hbase.master","localhost:60000");
+          conf.set("hbase.master","localhost:60000");
         }
 
-        private HBaseHelper() {
-
+        private Connection connection;
+        private HBaseHelper() throws IOException {
+          this.connection = ConnectionFactory.createConnection(conf);
         }
 
-        public HTable createTable(String tableName, String... descriptors)
+        public Table createTable(String tableName, String... descriptors)
                 throws IOException {
             if (tableExists(tableName)) {
                 dropTable(tableName);
@@ -72,44 +72,54 @@ public class Main {
             return doCreateTable(tableName, descriptors);
         }
 
-        private HTable doCreateTable(String tableName, String... descriptors)
+        private Table doCreateTable(String tableName, String... descriptors)
                 throws IOException {
+            Admin hbaseAdmin = this.connection.getAdmin();
+
             HTableDescriptor descriptor = new HTableDescriptor(tableName);
             for (String each : descriptors) {
                 HColumnDescriptor cd = new HColumnDescriptor(each.getBytes());
                 descriptor.addFamily(cd);
             }
-            hbase.createTable(descriptor);
+            hbaseAdmin.createTable(descriptor);
             debug(String.format("Database %s created", tableName));
-            return new HTable(tableName);
+            hbaseAdmin.close();
+            return this.connection.getTable(TableName.valueOf(tableName));
         }
 
         public void dropTable(String tableName) throws IOException {
-            hbase.disableTable(tableName);
-            hbase.deleteTable(tableName);
+            Admin hbaseAdmin = this.connection.getAdmin();
+            hbaseAdmin.disableTable(TableName.valueOf(tableName));
+            hbaseAdmin.deleteTable(TableName.valueOf(tableName));
+            hbaseAdmin.close();
         }
 
-        public HTable getOrCreateTable(String tableName, String... descriptors)
-                throws IOException {
-            if (!tableExists(tableName)) {
-                doCreateTable(tableName, descriptors);
-            }
-            return new HTable(tableName);
-        }
-
-        public void insert(HTable table, String rowKey, List<String> values)
+        public void insert(Table table, String rowKey, List<String> values)
                 throws IOException {
             if (values.size() == 3) {
                 Put put = new Put(Bytes.toBytes(rowKey));
                 put.add(Bytes.toBytes(values.get(0)),
-                        Bytes.toBytes(values.get(1)),
-                        Bytes.toBytes(values.get(2)));
+                      Bytes.toBytes(values.get(1)),
+                      Bytes.toBytes(values.get(2)));
                 table.put(put);
             }
         }
 
         public boolean tableExists(String tableName) throws IOException {
-            return hbase.tableExists(tableName);
+            Admin hbaseAdmin = this.connection.getAdmin();
+            boolean result = hbaseAdmin.tableExists(TableName.valueOf(tableName));
+            hbaseAdmin.close();
+
+            return result;
+        }
+
+        public void closeAll(Table table) {
+          try {
+            table.close();
+            this.connection.close();
+          } catch (IOException e) {
+            debug("Failed to close the table or the connection.");
+          }
         }
     }
 
@@ -260,11 +270,13 @@ public class Main {
     {
         Mail mail;
         long failed = 0, imported = 0;
-
+        String tableName = "enron";
         File dir = new File(args.length == 0 ? MAIL_FOLDER : args[0]);
+        HBaseHelper hbase = null;
+        Table table = null;
         try {
-            HBaseHelper hbase = HBaseHelper.create();
-            HTable table = hbase.createTable("enron", Mail.PERSON, Mail.FOLDER, Mail.BODY);
+            hbase = HBaseHelper.create();
+            table = hbase.createTable(tableName, Mail.PERSON, Mail.FOLDER, Mail.BODY);
             
             Collection<File> files = FileUtils.listFiles(dir, TrueFileFilter.TRUE, TrueFileFilter.TRUE);            
             for (File each: files) {
@@ -294,6 +306,8 @@ public class Main {
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+        } finally {
+          hbase.closeAll(table);
         }
 
     }
