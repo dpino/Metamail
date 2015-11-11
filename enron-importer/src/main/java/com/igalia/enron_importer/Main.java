@@ -58,24 +58,24 @@ public class Main {
         }
 
         private HBaseAdmin hbase;
-
+        private Connection connection;
         static {
             conf.set("hbase.master","localhost:60000");
         }
 
-        private HBaseHelper() {
-
+        private HBaseHelper() throws IOException {
+          this.connection = ConnectionFactory.createConnection(conf);
         }
 
-        public void createTable(String tableName, String... descriptors)
+        public Table createTable(String tableName, String... descriptors)
                 throws IOException {
             if (tableExists(tableName)) {
                 dropTable(tableName);
             }
-            doCreateTable(tableName, descriptors);
+            return doCreateTable(tableName, descriptors);
         }
 
-        private void doCreateTable(String tableName, String... descriptors)
+        private Table doCreateTable(String tableName, String... descriptors)
                 throws IOException {
             HTableDescriptor descriptor = new HTableDescriptor(tableName);
             for (String each : descriptors) {
@@ -84,6 +84,7 @@ public class Main {
             }
             hbase.createTable(descriptor);
             debug(String.format("Database %s created", tableName));
+            return this.connection.getTable(TableName.valueOf(tableName));
         }
 
         public void dropTable(String tableName) throws IOException {
@@ -91,27 +92,28 @@ public class Main {
             hbase.deleteTable(tableName);
         }
 
-        public void insert(String tableName, String rowKey, List<String> values)
+        public void insert(Table table, String rowKey, List<String> values)
                 throws IOException {
-
-            Connection connection = ConnectionFactory.createConnection(conf);
-            Table table = connection.getTable(TableName.valueOf(tableName));
-            try {
-              if (values.size() == 3) {
-                  Put put = new Put(Bytes.toBytes(rowKey));
-                  put.add(Bytes.toBytes(values.get(0)),
-                        Bytes.toBytes(values.get(1)),
-                        Bytes.toBytes(values.get(2)));
-                  table.put(put);
-              }
-            } finally {
-              table.close();
-              connection.close();
+            if (values.size() == 3) {
+                Put put = new Put(Bytes.toBytes(rowKey));
+                put.add(Bytes.toBytes(values.get(0)),
+                      Bytes.toBytes(values.get(1)),
+                      Bytes.toBytes(values.get(2)));
+                table.put(put);
             }
         }
 
         public boolean tableExists(String tableName) throws IOException {
             return hbase.tableExists(tableName);
+        }
+
+        public void closeAll(Table table) {
+          try {
+            table.close();
+            connection.close();
+          } catch (IOException e) {
+            debug("Failed to close the table or the connection.");
+          }
         }
     }
 
@@ -264,9 +266,11 @@ public class Main {
         long failed = 0, imported = 0;
         String tableName = "enron";
         File dir = new File(args.length == 0 ? MAIL_FOLDER : args[0]);
+        HBaseHelper hbase = null;
+        Table table = null;
         try {
-            HBaseHelper hbase = HBaseHelper.create();
-            hbase.createTable(tableName, Mail.PERSON, Mail.FOLDER, Mail.BODY);
+            hbase = HBaseHelper.create();
+            table = hbase.createTable(tableName, Mail.PERSON, Mail.FOLDER, Mail.BODY);
             
             Collection<File> files = FileUtils.listFiles(dir, TrueFileFilter.TRUE, TrueFileFilter.TRUE);            
             for (File each: files) {
@@ -276,9 +280,9 @@ public class Main {
             	String body = mail.getBody();
             	if (body != null && !body.isEmpty()) {
             		// System.out.println("### Insert mail: " + mail);
-                	hbase.insert(tableName, mail.getId(), Arrays.asList(Mail.PERSON, "", mail.getPerson()));
-                	hbase.insert(tableName, mail.getId(), Arrays.asList(Mail.FOLDER, "", mail.getFolder()));
-                	hbase.insert(tableName, mail.getId(), Arrays.asList(Mail.BODY, "", body));                	
+                	hbase.insert(table, mail.getId(), Arrays.asList(Mail.PERSON, "", mail.getPerson()));
+                	hbase.insert(table, mail.getId(), Arrays.asList(Mail.FOLDER, "", mail.getFolder()));
+                	hbase.insert(table, mail.getId(), Arrays.asList(Mail.BODY, "", body));                	
                 	imported++;
             	} else {
             		failed++;
@@ -296,6 +300,8 @@ public class Main {
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+        } finally {
+          hbase.closeAll(table);
         }
 
     }
