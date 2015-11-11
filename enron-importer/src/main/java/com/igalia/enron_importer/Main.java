@@ -52,17 +52,14 @@ public class Main {
         private static Configuration conf = HBaseConfiguration.create();
 
         public static HBaseHelper create() throws MasterNotRunningException, ZooKeeperConnectionException , IOException {
-            HBaseHelper result = new HBaseHelper();
-            result.hbase = result.connection.getAdmin();
-            return result;
+            return new HBaseHelper();
         }
 
-        private Admin hbase;
-        private Connection connection;
         static {
-            conf.set("hbase.master","localhost:60000");
+          conf.set("hbase.master","localhost:60000");
         }
 
+        private Connection connection;
         private HBaseHelper() throws IOException {
           this.connection = ConnectionFactory.createConnection(conf);
         }
@@ -77,19 +74,24 @@ public class Main {
 
         private Table doCreateTable(String tableName, String... descriptors)
                 throws IOException {
+            Admin hbaseAdmin = this.connection.getAdmin();
+
             HTableDescriptor descriptor = new HTableDescriptor(tableName);
             for (String each : descriptors) {
                 HColumnDescriptor cd = new HColumnDescriptor(each.getBytes());
                 descriptor.addFamily(cd);
             }
-            hbase.createTable(descriptor);
+            hbaseAdmin.createTable(descriptor);
             debug(String.format("Database %s created", tableName));
+            hbaseAdmin.close();
             return this.connection.getTable(TableName.valueOf(tableName));
         }
 
         public void dropTable(String tableName) throws IOException {
-            hbase.disableTable(TableName.valueOf(tableName));
-            hbase.deleteTable(TableName.valueOf(tableName));
+            Admin hbaseAdmin = this.connection.getAdmin();
+            hbaseAdmin.disableTable(TableName.valueOf(tableName));
+            hbaseAdmin.deleteTable(TableName.valueOf(tableName));
+            hbaseAdmin.close();
         }
 
         public void insert(Table table, String rowKey, List<String> values)
@@ -104,13 +106,17 @@ public class Main {
         }
 
         public boolean tableExists(String tableName) throws IOException {
-            return hbase.tableExists(TableName.valueOf(tableName));
+            Admin hbaseAdmin = this.connection.getAdmin();
+            boolean result = hbaseAdmin.tableExists(TableName.valueOf(tableName));
+            hbaseAdmin.close();
+
+            return result;
         }
 
         public void closeAll(Table table) {
           try {
             table.close();
-            connection.close();
+            this.connection.close();
           } catch (IOException e) {
             debug("Failed to close the table or the connection.");
           }
