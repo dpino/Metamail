@@ -34,135 +34,135 @@ import javax.mail.internet.MimeMessage;
 
 /**
  * Helper class for retrieving fields from an email
- * 
+ *
  * @author Diego Pino García <dpino@igalia.com>
- * 
+ *
  */
 public class MailRecord {
 
-	private static final RegExp emailRegExp = RegExp.create("<(.*)>"); 
-	
-	private MimeMessage msg;
+    private static final RegExp emailRegExp = RegExp.create("<(.*)>");
 
-	private Calendar sentDate;
-	
-	public static MailRecord create(Session s, InputStream input) throws MessagingException {
-		return MailRecord.create(new MimeMessage(s, input));
-	}
-	
-	public static MailRecord create(MimeMessage msg) {
-		return new MailRecord(msg);
-	}
-	
-	private MailRecord(MimeMessage msg) {
-		this.msg = msg;		
-	}
+    private MimeMessage msg;
 
-	public String getFrom() {
-		try {
-			Address[] addresses = msg.getFrom();
-			if (addresses != null && addresses.length > 0) {
+    private Calendar sentDate;
+
+    public static MailRecord create(Session s, InputStream input) throws MessagingException {
+        return MailRecord.create(new MimeMessage(s, input));
+    }
+
+    public static MailRecord create(MimeMessage msg) {
+        return new MailRecord(msg);
+    }
+
+    private MailRecord(MimeMessage msg) {
+        this.msg = msg;
+    }
+
+    public String getFrom() {
+        try {
+            Address[] addresses = msg.getFrom();
+            if (addresses != null && addresses.length > 0) {
                 return addresses[0].toString();
-			}
-		} catch (MessagingException e) {
-			e.printStackTrace();
-		}
-		return "";
-	}
+            }
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
 
-	public List<String> getTo() {
-		List<String> result = new ArrayList<String>();
-		try {				
-			Address[] addresses = msg.getRecipients(Message.RecipientType.TO);
-			if (addresses != null && addresses.length > 0) {
-				for (Address address : addresses) {
-					List<String> parts = emailRegExp.evaluate(address
-							.toString());
-					if (!parts.isEmpty()) {
-						result.add(parts.get(0));
-					} else {
-						result.add(address.toString());
-					}
-				}
-			}
-		} catch (MessagingException e) {
-			e.printStackTrace();
-		}
-		return result;
-	}
-		
-	public int getYear() {
-		return getSentDate().get(Calendar.YEAR);
-	}
-	
-	private Calendar getSentDate() {
-		if (sentDate == null) {
-			sentDate = Calendar.getInstance();
-			try {
-				sentDate.setTime(msg.getSentDate());
-			} catch (MessagingException e) {
-				e.printStackTrace();
-			}
-		}
-		return sentDate;
-	}
-	
-	public int getMonth() {
-		return getSentDate().get(Calendar.MONTH);
-		
-	}
-	
-	public int getDayOfWeek() {
-		return getSentDate().get(Calendar.DAY_OF_WEEK);
-		
-	}
-	
-	public int getHour() {
-		return getSentDate().get(Calendar.HOUR_OF_DAY);		
-	}		
+    public List<String> getTo() {
+        List<String> result = new ArrayList<String>();
+        try {
+            Address[] addresses = msg.getRecipients(Message.RecipientType.TO);
+            if (addresses != null && addresses.length > 0) {
+                for (Address address : addresses) {
+                    List<String> parts = emailRegExp.evaluate(address
+                            .toString());
+                    if (!parts.isEmpty()) {
+                        result.add(parts.get(0));
+                    } else {
+                        result.add(address.toString());
+                    }
+                }
+            }
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
 
-	/**
-	 * 
-	 * @author Diego Pino García <dpino@igalia.com>
-	 * 
-	 *         Helper class for handling regular expressions
-	 * 
-	 */
-	static class RegExp {
+    public int getYear() {
+        return getSentDate().get(Calendar.YEAR);
+    }
 
-		private Pattern pattern;
+    private Calendar getSentDate() {
+        if (sentDate == null) {
+            sentDate = Calendar.getInstance();
+            try {
+                sentDate.setTime(msg.getSentDate());
+            } catch (MessagingException e) {
+                e.printStackTrace();
+            }
+        }
+        return sentDate;
+    }
 
-		private RegExp(String regexp) {
-			this.pattern = Pattern.compile(regexp);
-		}
+    public int getMonth() {
+        return getSentDate().get(Calendar.MONTH);
 
-		public static RegExp create(String regexp) {
-			return new RegExp(regexp);
-		}
+    }
 
-		public List<String> evaluate(String line) {
-			List<String> result = new ArrayList<String>();
+    public int getDayOfWeek() {
+        return getSentDate().get(Calendar.DAY_OF_WEEK);
 
-			int count = 1;
-			Matcher matcher = pattern.matcher(line);
-			while (matcher.find()) {
-				result.add(matcher.group(count++));
-			}
-			return result;
-		}
-		
-	}
+    }
 
-	public String getMessageID() throws MessagingException {
-		return msg.getMessageID();
-	}
+    public int getHour() {
+        return getSentDate().get(Calendar.HOUR_OF_DAY);
+    }
 
-	public int getSize() throws MessagingException {
-		return msg.getSize();
-	}
+    /**
+     *
+     * @author Diego Pino García <dpino@igalia.com>
+     *
+     *         Helper class for handling regular expressions
+     *
+     */
+    static class RegExp {
 
-	public String getSubject() throws MessagingException {
-		return msg.getSubject();
-	}
-	
+        private Pattern pattern;
+
+        private RegExp(String regexp) {
+            this.pattern = Pattern.compile(regexp);
+        }
+
+        public static RegExp create(String regexp) {
+            return new RegExp(regexp);
+        }
+
+        public List<String> evaluate(String line) {
+            List<String> result = new ArrayList<String>();
+
+            int count = 1;
+            Matcher matcher = pattern.matcher(line);
+            while (matcher.find()) {
+                result.add(matcher.group(count++));
+            }
+            return result;
+        }
+
+    }
+
+    public String getMessageID() throws MessagingException {
+        return msg.getMessageID();
+    }
+
+    public int getSize() throws MessagingException {
+        return msg.getSize();
+    }
+
+    public String getSubject() throws MessagingException {
+        return msg.getSubject();
+    }
+
 }

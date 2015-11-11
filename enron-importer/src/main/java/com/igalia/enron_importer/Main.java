@@ -36,11 +36,11 @@ import org.apache.hadoop.hbase.util.Bytes;
  *
  */
 public class Main {
-	
+
     private static final String MAIL_FOLDER = "./data/maildir/";
 
     private static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-    
+
 
     /**
      *
@@ -133,11 +133,11 @@ public class Main {
         public final static String ID = "id";
 
         public final static String PERSON = "person";
-        
+
         public final static String FOLDER = "folder";
-        
+
         public final static String BODY = "body";
-        
+
         public static Mail create(String person, String folder, String body) {
             return create(UUID.randomUUID().toString(), person, folder, body);
         }
@@ -154,22 +154,22 @@ public class Main {
         private String id;
 
         private String person;
-        
+
         private String folder;
-        
-		private String body;
+
+        private String body;
 
         public Mail() {
 
         }
 
         public String getPerson() {
-			return person;
-		}
+            return person;
+        }
 
-		public String getFolder() {
-			return folder;
-		}
+        public String getFolder() {
+            return folder;
+        }
 
         public String getBody() {
             return body;
@@ -184,9 +184,9 @@ public class Main {
         }
 
         public String toString() {
-			return String.format("(%s: %s; %s: %s; %s: %s; %s: %s)", ID, id,
-					PERSON, person, FOLDER, folder, BODY,
-					StringUtils.substring(body, 0, 16));
+            return String.format("(%s: %s; %s: %s; %s: %s; %s: %s)", ID, id,
+                    PERSON, person, FOLDER, folder, BODY,
+                    StringUtils.substring(body, 0, 16));
         }
 
     }
@@ -243,29 +243,29 @@ public class Main {
             return filereader != null ? filereader.readLine() : new String();
         }
 
-		public static Mail createMail(String filename) {
-			try {
-				String[] parts = StringUtils.split(filename, "/");
-				int size = parts.length;
-				if (size >= 3) {
-					String folder = parts[size - 2];
-					String person = parts[size - 3];
-					String body = FileUtils.readFileToString(new File(filename));
-					
-					return Mail.create(person, folder, body);
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			return null;
-		}
+        public static Mail createMail(String filename) {
+            try {
+                String[] parts = StringUtils.split(filename, "/");
+                int size = parts.length;
+                if (size >= 3) {
+                    String folder = parts[size - 2];
+                    String person = parts[size - 3];
+                    String body = FileUtils.readFileToString(new File(filename));
+
+                    return Mail.create(person, folder, body);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
 
     }
 
     private static void debug(Object obj) {
         System.out.println(String.format("### DEBUG: %s", obj.toString()));
     }
-    
+
     public static void main( String[] args )
     {
         Mail mail;
@@ -277,26 +277,26 @@ public class Main {
         try {
             hbase = HBaseHelper.create();
             table = hbase.createTable(tableName, Mail.PERSON, Mail.FOLDER, Mail.BODY);
-            
-            Collection<File> files = FileUtils.listFiles(dir, TrueFileFilter.TRUE, TrueFileFilter.TRUE);            
+
+            Collection<File> files = FileUtils.listFiles(dir, TrueFileFilter.TRUE, TrueFileFilter.TRUE);
             for (File each: files) {
-            	String filename = each.getCanonicalPath();
-            	mail = MailFactory.createMail(filename);                        	
-            	
-            	String body = mail.getBody();
-            	if (body != null && !body.isEmpty()) {
-            		// System.out.println("### Insert mail: " + mail);
-                	hbase.insert(table, mail.getId(), Arrays.asList(Mail.PERSON, "", mail.getPerson()));
-                	hbase.insert(table, mail.getId(), Arrays.asList(Mail.FOLDER, "", mail.getFolder()));
-                	hbase.insert(table, mail.getId(), Arrays.asList(Mail.BODY, "", body));                	
-                	imported++;
-            	} else {
-            		failed++;
-            	}
+                String filename = each.getCanonicalPath();
+                mail = MailFactory.createMail(filename);
+
+                String body = mail.getBody();
+                if (body != null && !body.isEmpty()) {
+                    // System.out.println("### Insert mail: " + mail);
+                    hbase.insert(table, mail.getId(), Arrays.asList(Mail.PERSON, "", mail.getPerson()));
+                    hbase.insert(table, mail.getId(), Arrays.asList(Mail.FOLDER, "", mail.getFolder()));
+                    hbase.insert(table, mail.getId(), Arrays.asList(Mail.BODY, "", body));
+                    imported++;
+                } else {
+                    failed++;
+                }
             }
-			System.out.println(String.format(
-					"Total: %d; Imported: %d; Failed: %d", files.size(),
-					imported, failed));
+            System.out.println(String.format(
+                    "Total: %d; Imported: %d; Failed: %d", files.size(),
+                    imported, failed));
         } catch (MasterNotRunningException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

@@ -34,25 +34,25 @@ import com.igalia.metamail.utils.MailRecord;
 
 
 /**
- * 
+ *
  * @author Diego Pino García <dpino@igalia.com>
  *
  */
 public class Main {
-	
+
     public static void main( String[] args ) {
-    	try {
-        	String filename = "../enron-importer/data/maildir/lay-k/sent/1.";
-        	byte[] body = FileUtils.readFileToByteArray(new File(filename));
-    		InputStream input = new ByteArrayInputStream(body);
-			Session s = Session.getDefaultInstance(new Properties());
-        	        	
-			MailRecord mail = MailRecord.create(s, input);
-	        System.out.println( "To: " + mail.getTo());
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (MessagingException e) {
-			e.printStackTrace();
-		}    	
+        try {
+            String filename = "../enron-importer/data/maildir/lay-k/sent/1.";
+            byte[] body = FileUtils.readFileToByteArray(new File(filename));
+            InputStream input = new ByteArrayInputStream(body);
+            Session s = Session.getDefaultInstance(new Properties());
+
+            MailRecord mail = MailRecord.create(s, input);
+            System.out.println( "To: " + mail.getTo());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        }
     }
 }

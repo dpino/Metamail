@@ -28,109 +28,109 @@ import com.igalia.metamail.utils.JobRunner;
 import com.igalia.metamail.utils.MailRecord;
 
 /**
- * 
+ *
  * Emails received by person or mailing-list grouped by year or month
- * 
+ *
  * YEAR:2012:igalia-general@igalia.com 20
  * MONTH:2012-01:igalia-general@igalia.com 5
- * 
- * 
+ *
+ *
  * @author Diego Pino García <dpino@igalia.com>
- * 
+ *
  */
 public class MessagesReceivedByPersonGroupedByYear {
 
-	private static final String jobName = "MessagesReceivedByPersonGroupedByYear";
-	
-	private static final String mailsTable = "enron";
+    private static final String jobName = "MessagesReceivedByPersonGroupedByYear";
 
-	private static final String MAIL_OUT = "mail/out/msgReceivedByPersonGroupedByYear/";
-	
-	
-	public static class MessagesReceivedByPersonGroupedByYearMapper extends
-			TableMapper<Text, IntWritable> {
+    private static final String mailsTable = "enron";
 
-		private IntWritable one = new IntWritable(1);
+    private static final String MAIL_OUT = "mail/out/msgReceivedByPersonGroupedByYear/";
 
-		public void map(ImmutableBytesWritable row, Result value,
-				Context context) throws InterruptedException, IOException {
-			byte[] body = value.getValue(Bytes.toBytes("body"),
-					Bytes.toBytes(""));
 
-			if (body == null) {
-				return;
-			}
-			
-			InputStream input = new ByteArrayInputStream(body);
-			Session s = Session.getDefaultInstance(new Properties());
-			MailRecord mail;
-			try {
-				mail = MailRecord.create(s, input);
-				
-				List<String> to = mail.getTo();
-				if (!to.isEmpty()) {
-					int year = mail.getYear();
-					int month = mail.getMonth() + 1;
-					for (String each: to) {
-						String yearKey = String.format("YEAR:%s:%s", year, each);
-						String monthKey = String.format("MONTH:%s-%s:%s", year, month, each);						
-						context.write(new Text(yearKey), one);
-						context.write(new Text(monthKey), one);
-					}
-				}
-			} catch (MessagingException e) {
-				e.printStackTrace();
-			}
-		}
-	}	
-	
-	public static class MessagesReceivedByPersonGroupedByYearReducer extends
-			Reducer<Text, IntWritable, Text, IntWritable> {
-		
-		public void reduce(Text key, Iterable<IntWritable> values,
-				Context context) throws IOException, InterruptedException {
+    public static class MessagesReceivedByPersonGroupedByYearMapper extends
+            TableMapper<Text, IntWritable> {
 
-			int sum = 0;
-			for (IntWritable val : values) {
-				sum += val.get();
-			}
-			context.write(key, new IntWritable(sum));
-		}
+        private IntWritable one = new IntWritable(1);
 
-	}
-	
-	public static void main(String args[]) throws Exception {
-		if (JobRunner.run(setupJob())) {
-			System.out.println("Job completed!");
-		}
-	}
-	
-	private static Job setupJob() throws IOException {
-		Configuration config = HBaseConfiguration.create();
-		Job job = new Job(config, jobName);
-		job.setJarByClass(MessagesReceivedByPersonGroupedByYearMapper.class);
+        public void map(ImmutableBytesWritable row, Result value,
+                Context context) throws InterruptedException, IOException {
+            byte[] body = value.getValue(Bytes.toBytes("body"),
+                    Bytes.toBytes(""));
 
-		Scan scan = new Scan();
-		scan.setCaching(500);
-		scan.setCacheBlocks(false); 
+            if (body == null) {
+                return;
+            }
 
-		// Mapper
-		TableMapReduceUtil.initTableMapperJob(
-				mailsTable, 
-				scan, 
-				MessagesReceivedByPersonGroupedByYearMapper.class, 
-				Text.class, IntWritable.class, 
-				job);
+            InputStream input = new ByteArrayInputStream(body);
+            Session s = Session.getDefaultInstance(new Properties());
+            MailRecord mail;
+            try {
+                mail = MailRecord.create(s, input);
 
-		// Reducer
-		job.setCombinerClass(MessagesReceivedByPersonGroupedByYearReducer.class);
-		job.setReducerClass(MessagesReceivedByPersonGroupedByYearReducer.class);
-		job.setNumReduceTasks(1);
+                List<String> to = mail.getTo();
+                if (!to.isEmpty()) {
+                    int year = mail.getYear();
+                    int month = mail.getMonth() + 1;
+                    for (String each: to) {
+                        String yearKey = String.format("YEAR:%s:%s", year, each);
+                        String monthKey = String.format("MONTH:%s-%s:%s", year, month, each);
+                        context.write(new Text(yearKey), one);
+                        context.write(new Text(monthKey), one);
+                    }
+                }
+            } catch (MessagingException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
-		FileOutputFormat.setOutputPath(job, new Path(
-				MessagesReceivedByPersonGroupedByYear.MAIL_OUT));
+    public static class MessagesReceivedByPersonGroupedByYearReducer extends
+            Reducer<Text, IntWritable, Text, IntWritable> {
 
-		return job;
-	}	
-	
+        public void reduce(Text key, Iterable<IntWritable> values,
+                Context context) throws IOException, InterruptedException {
+
+            int sum = 0;
+            for (IntWritable val : values) {
+                sum += val.get();
+            }
+            context.write(key, new IntWritable(sum));
+        }
+
+    }
+
+    public static void main(String args[]) throws Exception {
+        if (JobRunner.run(setupJob())) {
+            System.out.println("Job completed!");
+        }
+    }
+
+    private static Job setupJob() throws IOException {
+        Configuration config = HBaseConfiguration.create();
+        Job job = new Job(config, jobName);
+        job.setJarByClass(MessagesReceivedByPersonGroupedByYearMapper.class);
+
+        Scan scan = new Scan();
+        scan.setCaching(500);
+        scan.setCacheBlocks(false);
+
+        // Mapper
+        TableMapReduceUtil.initTableMapperJob(
+                mailsTable,
+                scan,
+                MessagesReceivedByPersonGroupedByYearMapper.class,
+                Text.class, IntWritable.class,
+                job);
+
+        // Reducer
+        job.setCombinerClass(MessagesReceivedByPersonGroupedByYearReducer.class);
+        job.setReducerClass(MessagesReceivedByPersonGroupedByYearReducer.class);
+        job.setNumReduceTasks(1);
+
+        FileOutputFormat.setOutputPath(job, new Path(
+                MessagesReceivedByPersonGroupedByYear.MAIL_OUT));
+
+        return job;
+    }
+
 }

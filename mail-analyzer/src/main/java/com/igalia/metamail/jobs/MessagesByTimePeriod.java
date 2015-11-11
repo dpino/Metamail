@@ -49,109 +49,109 @@ import com.igalia.metamail.utils.JobRunner;
 
 public class MessagesByTimePeriod {
 
-	private static final String mailsTable = "enron";
-	
-	private static final String MAIL_OUT = "mail/out/msgByTimePeriod/";
+    private static final String mailsTable = "enron";
 
-	public static class MessagesByTimePeriodMapper extends
-			TableMapper<Text, IntWritable> {
-		private IntWritable one = new IntWritable(1);
+    private static final String MAIL_OUT = "mail/out/msgByTimePeriod/";
 
-		public void map(ImmutableBytesWritable row, Result value,
-				Context context) throws InterruptedException, IOException {
+    public static class MessagesByTimePeriodMapper extends
+            TableMapper<Text, IntWritable> {
+        private IntWritable one = new IntWritable(1);
 
-			byte[] body = value.getValue(Bytes.toBytes("body"),
-					Bytes.toBytes(""));
+        public void map(ImmutableBytesWritable row, Result value,
+                Context context) throws InterruptedException, IOException {
 
-			if (body == null) {
-				return;
-			}
-			
-			InputStream input = new ByteArrayInputStream(body);
-			Session s = Session.getDefaultInstance(new Properties());
-			MimeMessage msg;
+            byte[] body = value.getValue(Bytes.toBytes("body"),
+                    Bytes.toBytes(""));
 
-			try {
-				msg = new MimeMessage(s, input);
+            if (body == null) {
+                return;
+            }
 
-				Date date = msg.getSentDate();
-				if (date == null) {
-					return;
-				}
-				Calendar calendar = Calendar.getInstance();
-				calendar.setTime(date);
+            InputStream input = new ByteArrayInputStream(body);
+            Session s = Session.getDefaultInstance(new Properties());
+            MimeMessage msg;
 
-				// Divide date in parts (day-month-year)
-				int year = calendar.get(Calendar.YEAR);
-				int month = calendar.get(Calendar.MONTH) + 1;
-				int day = calendar.get(Calendar.DATE);
-				int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
-				int hour = calendar.get(Calendar.HOUR_OF_DAY);
+            try {
+                msg = new MimeMessage(s, input);
 
-				// Create key for each part
-				String yearKey = String.format("%d", year);
-				String monthKey = String.format("%d-%d", month, year);
-				String dayKey = String.format("%d-%d-%d", day, month, year);
+                Date date = msg.getSentDate();
+                if (date == null) {
+                    return;
+                }
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(date);
 
-				// Count +1 for each key
-				context.write(new Text("YEAR:" + yearKey), one);
-				context.write(new Text("MONTH:" + monthKey), one);
-				context.write(new Text("DATE:" + dayKey), one);
-				context.write(new Text("DAY_OF_WEEK:" + dayOfWeek), one);
-				context.write(new Text("HOUR:" + hour), one);
-			} catch (MessagingException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	public static class MessagesByTimePeriodReducer extends
-			Reducer<Text, IntWritable, Text, IntWritable> {
+                // Divide date in parts (day-month-year)
+                int year = calendar.get(Calendar.YEAR);
+                int month = calendar.get(Calendar.MONTH) + 1;
+                int day = calendar.get(Calendar.DATE);
+                int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+                int hour = calendar.get(Calendar.HOUR_OF_DAY);
 
-		public void reduce(Text key, Iterable<IntWritable> values,
-				Context context) throws IOException, InterruptedException {
-			int i = 0;
-			for (IntWritable val : values) {
-				i += val.get();
-			}
-			context.write(key, new IntWritable(i));
-		}
-	}
-	
-	public static void main(String args[]) throws Exception {
-		if (JobRunner.run(setupJob())) {
-			System.out.println("Job completed!");
-		}
-	}
-	
-	public static Boolean execute() throws Exception {
-		return Boolean.valueOf(JobRunner.run(setupJob()));
-	}
-	
-	private static Job setupJob() throws IOException, InterruptedException,
-			ClassNotFoundException {
-		Configuration config = HBaseConfiguration.create();
-		Job job = new Job(config, "MessagesByTimePeriod");
-		job.setJarByClass(MessagesByTimePeriod.class);
+                // Create key for each part
+                String yearKey = String.format("%d", year);
+                String monthKey = String.format("%d-%d", month, year);
+                String dayKey = String.format("%d-%d-%d", day, month, year);
 
-		Scan scan = new Scan();
-		scan.setCaching(500);
-		scan.setCacheBlocks(false); // don't set to true for MR jobs
+                // Count +1 for each key
+                context.write(new Text("YEAR:" + yearKey), one);
+                context.write(new Text("MONTH:" + monthKey), one);
+                context.write(new Text("DATE:" + dayKey), one);
+                context.write(new Text("DAY_OF_WEEK:" + dayOfWeek), one);
+                context.write(new Text("HOUR:" + hour), one);
+            } catch (MessagingException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
-		// Mapper
-		TableMapReduceUtil.initTableMapperJob(
-				mailsTable, // input HBase table name
-				scan, // Scan instance to control CF and attribute selection
-				MessagesByTimePeriod.MessagesByTimePeriodMapper.class, Text.class,
-				IntWritable.class, job);
+    public static class MessagesByTimePeriodReducer extends
+            Reducer<Text, IntWritable, Text, IntWritable> {
 
-		// Reducer
-		job.setReducerClass(MessagesByTimePeriod.MessagesByTimePeriodReducer.class);
-		job.setNumReduceTasks(1);
+        public void reduce(Text key, Iterable<IntWritable> values,
+                Context context) throws IOException, InterruptedException {
+            int i = 0;
+            for (IntWritable val : values) {
+                i += val.get();
+            }
+            context.write(key, new IntWritable(i));
+        }
+    }
 
-		FileOutputFormat.setOutputPath(job, new Path(MessagesByTimePeriod.MAIL_OUT));		
+    public static void main(String args[]) throws Exception {
+        if (JobRunner.run(setupJob())) {
+            System.out.println("Job completed!");
+        }
+    }
 
-		return job;
-	}
-	
+    public static Boolean execute() throws Exception {
+        return Boolean.valueOf(JobRunner.run(setupJob()));
+    }
+
+    private static Job setupJob() throws IOException, InterruptedException,
+            ClassNotFoundException {
+        Configuration config = HBaseConfiguration.create();
+        Job job = new Job(config, "MessagesByTimePeriod");
+        job.setJarByClass(MessagesByTimePeriod.class);
+
+        Scan scan = new Scan();
+        scan.setCaching(500);
+        scan.setCacheBlocks(false); // don't set to true for MR jobs
+
+        // Mapper
+        TableMapReduceUtil.initTableMapperJob(
+                mailsTable, // input HBase table name
+                scan, // Scan instance to control CF and attribute selection
+                MessagesByTimePeriod.MessagesByTimePeriodMapper.class, Text.class,
+                IntWritable.class, job);
+
+        // Reducer
+        job.setReducerClass(MessagesByTimePeriod.MessagesByTimePeriodReducer.class);
+        job.setNumReduceTasks(1);
+
+        FileOutputFormat.setOutputPath(job, new Path(MessagesByTimePeriod.MAIL_OUT));
+
+        return job;
+    }
+
 }

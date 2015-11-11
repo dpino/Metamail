@@ -29,101 +29,101 @@ import com.igalia.metamail.utils.MailRecord;
 
 /**
  * Emails received on each mailing list (email, number_of_messages)
- * 
+ *
  * @author Diego Pino García <dpino@igalia.com>
- * 
- * 
+ *
+ *
  */
 public class MessagesReceived {
 
-	private static final String jobName = "MessagesReceived";
-	
-	private static final String mailsTable = "enron";
-	
-	private static final String MAIL_OUT = "mail/out/msgReceived/";
-	
-	public static class MessagesReceivedMapper extends
-			TableMapper<Text, IntWritable> {
+    private static final String jobName = "MessagesReceived";
 
-		private IntWritable one = new IntWritable(1);
+    private static final String mailsTable = "enron";
 
-		public void map(ImmutableBytesWritable row, Result value,
-				Context context) throws InterruptedException, IOException {
+    private static final String MAIL_OUT = "mail/out/msgReceived/";
 
-			byte[] body = value.getValue(Bytes.toBytes("body"),
-					Bytes.toBytes(""));
+    public static class MessagesReceivedMapper extends
+            TableMapper<Text, IntWritable> {
 
-			if (body == null) {
-				return;
-			}
-			
-			InputStream input = new ByteArrayInputStream(body);
-			Session s = Session.getDefaultInstance(new Properties());
-			MailRecord mail;
-			try {
-				mail = MailRecord.create(s, input);
-				
-				List<String> to = mail.getTo();
-				if (!to.isEmpty()) {
-					for (String each: to) {
-						context.write(new Text(each), one);						
-					}
-				}
-			} catch (MessagingException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	public static class MessagesReceivedReducer extends
-			Reducer<Text, IntWritable, Text, IntWritable> {
+        private IntWritable one = new IntWritable(1);
 
-		public void reduce(Text key, Iterable<IntWritable> values,
-				Context context) throws IOException, InterruptedException {
-			int sum = 0;
-			for (IntWritable val : values) {
-				sum += val.get();
-			}
-			context.write(key, new IntWritable(sum));
-		}
-	}
-		
-	public static void main(String args[]) throws Exception {
-		if (JobRunner.run(setupJob())) {
-			System.out.println("Job completed!");
-		}
-	}
-	
-	public static Boolean execute() throws Exception {
-		return Boolean.valueOf(JobRunner.run(setupJob()));
-	}
-	
-	private static Job setupJob() throws IOException {
-		Configuration config = HBaseConfiguration.create();
-		Job job = new Job(config, jobName);
-		job.setJarByClass(MessagesReceived.class);
+        public void map(ImmutableBytesWritable row, Result value,
+                Context context) throws InterruptedException, IOException {
 
-		Scan scan = new Scan();
-		scan.setCaching(500);
-		scan.setCacheBlocks(false); // don't set to true for MR jobs
+            byte[] body = value.getValue(Bytes.toBytes("body"),
+                    Bytes.toBytes(""));
 
-		// Mapper
-		TableMapReduceUtil.initTableMapperJob(
-				mailsTable, 
-				scan, 
-				MessagesReceivedMapper.class, 
-				Text.class, IntWritable.class, 
-				job);
+            if (body == null) {
+                return;
+            }
 
-		// Reducer
-		job.setCombinerClass(MessagesReceivedReducer.class);
-		job.setReducerClass(MessagesReceivedReducer.class);
-		job.setNumReduceTasks(1);
+            InputStream input = new ByteArrayInputStream(body);
+            Session s = Session.getDefaultInstance(new Properties());
+            MailRecord mail;
+            try {
+                mail = MailRecord.create(s, input);
 
-		FileOutputFormat.setOutputPath(job, new Path(
-				MessagesReceived.MAIL_OUT));
+                List<String> to = mail.getTo();
+                if (!to.isEmpty()) {
+                    for (String each: to) {
+                        context.write(new Text(each), one);
+                    }
+                }
+            } catch (MessagingException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
-		return job;
-	}
-	
+    public static class MessagesReceivedReducer extends
+            Reducer<Text, IntWritable, Text, IntWritable> {
+
+        public void reduce(Text key, Iterable<IntWritable> values,
+                Context context) throws IOException, InterruptedException {
+            int sum = 0;
+            for (IntWritable val : values) {
+                sum += val.get();
+            }
+            context.write(key, new IntWritable(sum));
+        }
+    }
+
+    public static void main(String args[]) throws Exception {
+        if (JobRunner.run(setupJob())) {
+            System.out.println("Job completed!");
+        }
+    }
+
+    public static Boolean execute() throws Exception {
+        return Boolean.valueOf(JobRunner.run(setupJob()));
+    }
+
+    private static Job setupJob() throws IOException {
+        Configuration config = HBaseConfiguration.create();
+        Job job = new Job(config, jobName);
+        job.setJarByClass(MessagesReceived.class);
+
+        Scan scan = new Scan();
+        scan.setCaching(500);
+        scan.setCacheBlocks(false); // don't set to true for MR jobs
+
+        // Mapper
+        TableMapReduceUtil.initTableMapperJob(
+                mailsTable,
+                scan,
+                MessagesReceivedMapper.class,
+                Text.class, IntWritable.class,
+                job);
+
+        // Reducer
+        job.setCombinerClass(MessagesReceivedReducer.class);
+        job.setReducerClass(MessagesReceivedReducer.class);
+        job.setNumReduceTasks(1);
+
+        FileOutputFormat.setOutputPath(job, new Path(
+                MessagesReceived.MAIL_OUT));
+
+        return job;
+    }
+
 }
