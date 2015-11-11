@@ -25,7 +25,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -53,11 +53,11 @@ public class Main {
 
         public static HBaseHelper create() throws MasterNotRunningException, ZooKeeperConnectionException , IOException {
             HBaseHelper result = new HBaseHelper();
-            result.hbase = new HBaseAdmin(conf);
+            result.hbase = result.connection.getAdmin();
             return result;
         }
 
-        private HBaseAdmin hbase;
+        private Admin hbase;
         private Connection connection;
         static {
             conf.set("hbase.master","localhost:60000");
@@ -88,8 +88,8 @@ public class Main {
         }
 
         public void dropTable(String tableName) throws IOException {
-            hbase.disableTable(tableName);
-            hbase.deleteTable(tableName);
+            hbase.disableTable(TableName.valueOf(tableName));
+            hbase.deleteTable(TableName.valueOf(tableName));
         }
 
         public void insert(Table table, String rowKey, List<String> values)
@@ -104,7 +104,7 @@ public class Main {
         }
 
         public boolean tableExists(String tableName) throws IOException {
-            return hbase.tableExists(tableName);
+            return hbase.tableExists(TableName.valueOf(tableName));
         }
 
         public void closeAll(Table table) {
